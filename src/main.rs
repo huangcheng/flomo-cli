@@ -2,6 +2,8 @@ mod cli;
 mod config;
 mod api;
 
+use std::thread;
+
 use clap::Parser;
 
 use cli::Args;
@@ -15,12 +17,17 @@ fn main() {
         save(token)
     }
 
-    if let Some(memo) = args.memo.as_deref() {
-        let token = match read() {
-            Ok(token) => token,
-            Err(_) => panic!("Failed to read token"),
-        };
 
-        send(token.as_str(), memo);
-    }
+    let handle = thread::spawn(move || {
+        if let Some(memo) = args.memo.as_deref() {
+            let token = match read() {
+                Ok(token) => token,
+                Err(_) => panic!("Failed to read token"),
+            };
+
+            send(token.as_str(), memo);
+        }
+    });
+
+    handle.join().unwrap()
 }
